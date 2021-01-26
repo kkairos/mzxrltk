@@ -17,7 +17,7 @@ end
 . "THANKS TO: Thud of the MZX community for showing me this algorithm"
 . "and the code from which I expressly adapted it"
 . ""
-. "before including this alogirthm in this toolkit on github I'm checking to get Thud's"
+. "before keeping this alogirthm live on github I'm checking to get Thud's"
 . "official permission to do so"
 
 set "fov_radius" to 24
