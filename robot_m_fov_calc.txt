@@ -16,6 +16,9 @@ end
 . ""
 . "THANKS TO: Thud of the MZX community for showing me this algorithm"
 . "and the code from which I expressly adapted it"
+. ""
+. "before including this alogirthm in this toolkit on github I'm checking to get Thud's"
+. "official permission to do so"
 
 set "fov_radius" to 24
 
@@ -72,34 +75,4 @@ inc "tmp_x_subtile" by "diff_x"
 inc "tmp_y_subtile" by "diff_y"
 inc "tmp_lc" by 1
 if "tmp_lc" < "fov_radius" then "fov_calc_algorithm_0_sub_loop"
-goto "#return"
-
-: "fov_calc_algorithm_1"
-
-. "simpler FOV loop iterating over 360 degrees"
-. "because MZX uses integer math, we can our radius and a big loop and"
-. "the multiplier to get where we're going"
-. "MULTIPLIER: tells MZX to calculate trig values multiplied by this number"
-. "C_DIVISIONS: tells MZX to get this degree precision"
-. "FOV_RADIUS: intended radius of each line of sight in #fov_calc_sub"
-
-set "c_divisions" to 360
-
-set "tmp_lc" to 0
-: "fov_calc_algorithm_1_loop"
-set "tmp_theta" to "('tmp_lc'/'fov_radius')"
-set "multiplier" to "('tmp_lc'%'fov_radius')"
-set "tmp_x" to "('cos('tmp_theta')'+'spr('player_sprite')_x')"
-set "tmp_y" to "('sin('tmp_theta')'+'spr('player_sprite')_y')"
-set "map_inview_[&tmp_x&][&tmp_y&]" to 1
-set "map_visited_[&tmp_x&][&tmp_y&]" to 1
-if "(('tmp_x'='spr('player_sprite')_x')+('tmp_y'='spr('player_sprite')_y'))" = 2 then "fov_calc_algorithm_1_loop_continue"
-inc "tmp_lc" by "(('map_blocksight_[&tmp_x&][&tmp_y&]'=1)*('fov_radius'-'multiplier'))"
-: "fov_calc_algorithm_1_loop_continue"
-inc "tmp_lc" by 1
-if "tmp_lc" < "('c_divisions'*'fov_radius')" then "fov_calc_algorithm_1_loop"
-send "m_map_render" to "draw_map"
-end
-: "#fov_calc_algorithm_1_blocked"
-inc "tmp_lc" by "('fov_radius'-'multiplier')"
 goto "#return"
