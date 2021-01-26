@@ -1,0 +1,105 @@
+color c00
+end
+
+: "fov_calc"
+
+. "fov algorithm 0"
+. "calculates the line of sight for each of 360 degrees."
+. "creates a more 'rounded' FOV circle"
+. ""
+. "standard simple solution with standard artifacts"
+. "more or less props to Elig for his pseudocode on Roguebasin for this"
+
+. "fov algorithm 1"
+. "shorter solution that takes advantage of how MegaZeux does trig"
+. "creates a more typical ascii 'pointy' FOV circle that's more 'roguelikey'"
+. ""
+. "THANKS TO: Thud of the MZX community for showing me this algorithm"
+. "and the code from which I expressly adapted it"
+
+set "fov_radius" to 24
+
+goto "fov_calc_algorithm_&fov_algorithm&"
+
+: "fov_calc_algorithm_0"
+
+. "main FOV loop iterating over 360 degrees"
+. "because MZX uses integer math, we will work in artificial decimals"
+. "in our scheme, our x/y-values actually represent 1/1000th of a tile"
+. "FOV_MULT/MULTIPLIER: tells MZX to calculate trig values multiplied by this number"
+. "C_DIVISIONS: tells MZX to get this degree precision"
+. "FOV_RADIUS: intended radius of each line of sight in #fov_calc_sub"
+
+set "fov_mult" to 1000
+set "multiplier" to "fov_mult"
+set "c_divisions" to 360
+
+. "tmp_theta: the degree we're on in the main loop"
+. "diff_x: cosine value of theta for line calculation subloop"
+. "diff_y: sin value of theta for line calculation subloop"
+
+set "tmp_theta" to 0
+: "fov_calc_algorithm_0_loop"
+set "diff_x" to "cos('tmp_theta')"
+set "diff_y" to "sin('tmp_theta')"
+goto "#fov_calc_algorithm_0_sub"
+inc "tmp_theta" by 1
+if "tmp_theta" < "('c_divisions')" then "fov_calc_algorithm_0_loop"
+send "m_map_render" to "draw_map"
+end
+
+. "line of sight subloop for FOV loop"
+. "calculates the line for each tmp_theta"
+. "per working in 1000ths of tiles, initial tmp_x/tmp_y:"
+. "tmp_x_subtile: playerx*1000+500"
+. "tmp_y_subtile: playery*1000+500"
+. "tmp_x_tile, tmp_y_tile: converting back to big-tile-x-y"
+
+: "#fov_calc_algorithm_0_sub"
+set "tmp_x_subtile" to "(('spr('player_sprite')_x'*1000)+500)"
+set "tmp_y_subtile" to "(('spr('player_sprite')_y'*1000)+500)"
+set "tmp_lc" to 0
+: "fov_calc_algorithm_0_sub_loop"
+set "tmp_x_tile" to "('tmp_x_subtile'/1000)"
+set "tmp_y_tile" to "('tmp_y_subtile'/1000)"
+write overlay c0f " " at "tmp_x_tile" "tmp_y_tile"
+set "map_inview_[('tmp_x_tile')][('tmp_y_tile')]" to 1
+set "map_visited_[('tmp_x_tile')][('tmp_y_tile')]" to 1
+if "(('tmp_x_tile'='spr('player_sprite')_x')+('tmp_y_tile'='spr('player_sprite')_y'))" = 2 then "fov_calc_algorithm_0_sub_loop_continue"
+if "map_blocksight_[('tmp_x_tile')][('tmp_y_tile')]" = 1 then "#return"
+: "fov_calc_algorithm_0_sub_loop_continue"
+inc "tmp_x_subtile" by "diff_x"
+inc "tmp_y_subtile" by "diff_y"
+inc "tmp_lc" by 1
+if "tmp_lc" < "fov_radius" then "fov_calc_algorithm_0_sub_loop"
+goto "#return"
+
+: "fov_calc_algorithm_1"
+
+. "simpler FOV loop iterating over 360 degrees"
+. "because MZX uses integer math, we can our radius and a big loop and"
+. "the multiplier to get where we're going"
+. "MULTIPLIER: tells MZX to calculate trig values multiplied by this number"
+. "C_DIVISIONS: tells MZX to get this degree precision"
+. "FOV_RADIUS: intended radius of each line of sight in #fov_calc_sub"
+
+set "c_divisions" to 360
+
+set "tmp_lc" to 0
+: "fov_calc_algorithm_1_loop"
+set "tmp_theta" to "('tmp_lc'/'fov_radius')"
+set "multiplier" to "('tmp_lc'%'fov_radius')"
+set "tmp_x" to "('cos('tmp_theta')'+'spr('player_sprite')_x')"
+set "tmp_y" to "('sin('tmp_theta')'+'spr('player_sprite')_y')"
+set "map_inview_[&tmp_x&][&tmp_y&]" to 1
+set "map_visited_[&tmp_x&][&tmp_y&]" to 1
+if "(('tmp_x'='spr('player_sprite')_x')+('tmp_y'='spr('player_sprite')_y'))" = 2 then "fov_calc_algorithm_1_loop_continue"
+inc "tmp_lc" by "(('map_blocksight_[&tmp_x&][&tmp_y&]'=1)*('fov_radius'-'multiplier'))"
+: "fov_calc_algorithm_1_loop_continue"
+inc "tmp_lc" by 1
+if "tmp_lc" < "('c_divisions'*'fov_radius')" then "fov_calc_algorithm_1_loop"
+send "m_map_render" to "draw_map"
+end
+: "#fov_calc_algorithm_1_blocked"
+inc "tmp_lc" by "('fov_radius'-'multiplier')"
+goto "#return"

@@ -1,0 +1,78 @@
+: "init"
+. "@m_pathfinder&pathfinder_count&"
+inc "pathfinder_count" by 1
+end
+: "map"
+. "simple dykstra algorithm"
+. "max_steps = max squares to visit when looking for thing"
+. "$map_name = map name to get."
+. "map_target_x,map_target_y = map target x and y"
+
+: "pathfind_checks"
+if "player_moved" = 1 then "#pathfind_player"
+send "m_fov_init" to "fov_init"
+end
+
+: "#pathfind_player"
+set "pathfind_steps_max" to 64
+set "$map_name" to "player"
+set "map_target_x" to "spr('player_sprite')_x"
+set "map_target_y" to "spr('player_sprite')_y"
+goto "pathfind_algorithm_0"
+
+: "#pathfind_stresstest"
+set "pathfind_steps_max" to 32
+goto "pathfind_algorithm_0"
+
+: "pathfind_algorithm_0"
+set "tmp_lc" to 0
+loop start
+write overlay c0f "                                                                                                                       " at 0 "loopcount"
+loop for 23
+: "path_init_loop"
+set "pathto_&$map_name&_[('tmp_lc'%'level_w')][('tmp_lc'/'level_w')]" to 1000
+inc "tmp_lc" by 1
+if "tmp_lc" < "('level_h'*'level_w')" then "path_init_loop"
+set "pathfind_steps" to 0
+set "current_node[0]_x" to "map_target_x"
+set "current_node[0]_y" to "map_target_y"
+set "pathto_&$map_name&_[&map_target_x&][&map_target_y&]" to "pathfind_steps"
+set "current_nodes" to 1
+set "new_nodes" to 0
+set "tmp_lc" to 0
+: "pathfind_algorithm_0_loop"
+set "tmp_x" to "('current_node[&tmp_lc&]_x'-1)"
+set "tmp_y" to "('current_node[&tmp_lc&]_y'-1)"
+goto "#check_squares"
+inc "tmp_lc" by 1
+if "tmp_lc" < "current_nodes" then "pathfind_algorithm_0_loop"
+set "tmp_lc" to 0
+: "pathfind_algorithm_0_new_generation_loop"
+set "current_node[&tmp_lc&]_x" to "new_node[&tmp_lc&]_x"
+set "current_node[&tmp_lc&]_y" to "new_node[&tmp_lc&]_y"
+inc "tmp_lc" by 1
+if "tmp_lc" < "new_nodes" then "pathfind_algorithm_0_new_generation_loop"
+set "current_nodes" to "new_nodes"
+set "new_nodes" to 0
+inc "pathfind_steps" by 1
+set "tmp_lc" to 0
+if "pathfind_steps" < "pathfind_steps_max" then "pathfind_algorithm_0_loop"
+goto "#return"
+
+: "#check_squares"
+set "tmp_lc2" to 0
+: "check_nodes_loop"
+set "$str" to " "
+set "$str.0" to "('pathfind_steps'+48)"
+if "map_blockmove_[('tmp_x'+('tmp_lc2'%3))][('tmp_y'+('tmp_lc2'/3))]" = 1 then "check_nodes_loop_continue"
+if "pathto_&$map_name&_[('tmp_x'+('tmp_lc2'%3))][('tmp_y'+('tmp_lc2'/3))]" < "('pathfind_steps'+2)" then "check_nodes_loop_continue"
+set "pathto_&$map_name&_[('tmp_x'+('tmp_lc2'%3))][('tmp_y'+('tmp_lc2'/3))]" to "('pathfind_steps'+1)"
+set "new_node[&new_nodes&]_x" to "('tmp_x'+('tmp_lc2'%3))"
+set "new_node[&new_nodes&]_y" to "('tmp_y'+('tmp_lc2'/3))"
+inc "new_nodes" by 1
+: "check_nodes_loop_continue"
+inc "tmp_lc2" by 1
+if "tmp_lc2" < 9 then "check_nodes_loop"
+goto "#return"
+
+end

@@ -1,0 +1,22 @@
+color c00
+end
+
+. "draw the map to vlayer, which the main 'terminal' sprite references"
+: "draw_map"
+set "tmp_lc" to 0
+: "draw_map_loop"
+set "tmp_x" to "('tmp_lc'%'level_w')"
+set "tmp_y" to "('tmp_lc'/'level_w')"
+if "map_visited_[('tmp_x')][('tmp_y')]" = 1 then "#draw_map_loop_draw_tile"
+inc "tmp_lc" by 1
+if "tmp_lc" < "('level_h'*'level_w')" then "draw_map_loop"
+send "main" to "#return"
+end
+
+. "draws the appropriate terrain"
+: "#draw_map_loop_draw_tile"
+set "tmp_wall" to "map_terrain_[('tmp_x')][('tmp_y')]"
+set "tmp_inview" to "map_inview_[('tmp_x')][('tmp_y')]"
+set "vch&tmp_x&,&tmp_y&" to "terrain[('tmp_wall')]_char"
+set "vco&tmp_x&,&tmp_y&" to "terrain[('tmp_wall')][('tmp_inview')]_color"
+goto "#return"

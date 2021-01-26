@@ -1,0 +1,73 @@
+char '@'
+scrollview position 0 0
+playercolor is c00
+lockplayer
+set "pathfinder_count" to 0
+color c00
+set "commands" to "(10^6)"
+set "mzx_speed" to 2
+. "definition for player sprite"
+set "player_sprite" to 200
+set "spr('player_sprite')_height" to 1
+set "spr('player_sprite')_width" to 1
+set "spr('player_sprite')_cheight" to 1
+set "spr('player_sprite')_refx" to "thisx"
+set "spr('player_sprite')_refy" to "thisy"
+. "definition for terminal sprite and level height and width"
+set "terminal_sprite" to 0
+set "level_h" to 23
+set "level_w" to 80
+set "spr('terminal_sprite')_vlayer" to 1
+set "spr('terminal_sprite')_refx" to 0
+set "spr('terminal_sprite')_refy" to 0
+set "spr('terminal_sprite')_height" to "level_h"
+set "spr('terminal_sprite')_width" to "level_w"
+set "tmp_lc" to 0
+send "m_map_gen" to "map_gen"
+goto "#pause"
+set "spr0_x" to 20
+set "spr0_y" to 9
+put c0f Sprite "player_sprite" at 20 9
+set "spr0_off" to 1
+set "player_moved" to 1
+send "m_pathfinder0" to "pathfind_checks"
+goto "#pause"
+put c0f Sprite "player_sprite" at 20 9
+put c?? Sprite "terminal_sprite" at 0 0
+: "player_input_loop"
+wait for 1
+set "player_moved" to 0
+if "('prt_NW'+'prt_NN'+'prt_NE'+'prt_WW'+'prt_EE'+'prt_SW'+'prt_SS'+'prt_SE')" > 0 then "move_player_init"
+if "pr_WT" > 0 then "move_player_init_stay"
+goto "player_input_loop"
+: "#pause"
+: "ploop"
+wait for 1
+goto "ploop"
+end
+
+: "move_player_init"
+set "pr_&$tmp_checking&" to "(('pr_&$tmp_checking&'=0)+('pr_&$tmp_checking&'>2))=2)"
+set "diff_x" to "('prt_NE'+'prt_EE'+'prt_SE'-'prt_NW'-'prt_WW'-'prt_SW')"
+set "diff_y" to "('prt_SE'+'prt_SS'+'prt_SW'-'prt_NW'-'prt_NN'-'prt_NE')"
+set "diff_x" to "('diff_x'/('abs('diff_x')'))"
+set "diff_y" to "('diff_y'/('abs('diff_y')'))"
+if "('abs('diff_x')'+'abs('diff_y')')" = 0 then "move_player_break"
+goto "move_player"
+
+: "move_player_init_stay"
+set "diff_x" to 0
+set "diff_y" to 0
+goto "move_player"
+
+: "move_player"
+if c?? Sprite_colliding "player_sprite" at "('spr('player_sprite')_x'+'diff_x')" "('spr('player_sprite')_y'+'diff_y')" then "move_player_break"
+if "map_blockmove_[('spr('player_sprite')_x'+'diff_x')][('spr('player_sprite')_y'+'diff_y')]" = 1 then "move_player_break"
+inc "spr('player_sprite')_x" by "diff_x"
+inc "spr('player_sprite')_y" by "diff_y"
+goto "#clear_map_refresh"
+set "player_moved" to 1
+send "m_pathfinder0" to "pathfind_checks"
+goto "#pause"
+: "move_player_break"
+goto "player_input_loop"

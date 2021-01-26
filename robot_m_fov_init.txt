@@ -1,0 +1,13 @@
+color c00
+end
+
+: "fov_init"
+
+. "clear out the FOV first"
+
+set "tmp_lc" to 0
+: "fov_init_loop"
+set "map_inview_[('tmp_lc'%'level_w')][('tmp_lc'/'level_w')]" to 0
+inc "tmp_lc" by 1
+if "tmp_lc" < "('level_h'*'level_w')" then "fov_init_loop"
+send "m_fov_calc" to "fov_calc"

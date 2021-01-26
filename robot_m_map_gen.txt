@@ -1,0 +1,196 @@
+color c00
+end
+
+: "map_gen"
+
+. "types list, define the types of terrain available to the map"
+
+. "terrain[type]_char                char"
+. "terrain[type][inview]_color       yes LOS color"
+. "terrain[type][noview]_color       no LOS color"
+. "terrain[type][noview]_blocksight  can you see through it?"
+. "terrain[type][noview]_blockmove   can you move through it?"
+
+. "0 - floor"
+set "terrain[0]_blocksight" to 0
+set "terrain[0]_blockmove" to 0
+set "terrain[0]_char" to 249
+set "terrain[0][1]_color" to 7
+set "terrain[0][0]_color" to 8
+. "1 - wall"
+set "terrain[1]_blocksight" to 1
+set "terrain[1]_blockmove" to 1
+set "terrain[1]_char" to 35
+set "terrain[1][1]_color" to 135
+set "terrain[1][0]_color" to 8
+. "2 - tree"
+set "terrain[2]_blocksight" to 1
+set "terrain[2]_blockmove" to 0
+set "terrain[2]_char" to 5
+set "terrain[2][1]_color" to 2
+set "terrain[2][0]_color" to 8
+. "3 - water"
+set "terrain[3]_blocksight" to 0
+set "terrain[3]_blockmove" to 1
+set "terrain[3]_char" to 247
+set "terrain[3][1]_color" to 25
+set "terrain[3][0]_color" to 1
+. "4 - test tree"
+set "terrain[4]_blocksight" to 1
+set "terrain[4]_blockmove" to 0
+set "terrain[4]_char" to 5
+set "terrain[4][1]_color" to 3
+set "terrain[4][0]_color" to 3
+. "5 - wooden floor"
+set "terrain[5]_blocksight" to 0
+set "terrain[5]_blockmove" to 0
+set "terrain[5]_char" to 249
+set "terrain[5][1]_color" to 6
+set "terrain[5][0]_color" to 8
+. "6 - wooden wall"
+set "terrain[6]_blocksight" to 1
+set "terrain[6]_blockmove" to 1
+set "terrain[6]_char" to 35
+set "terrain[6][1]_color" to 104
+set "terrain[6][0]_color" to 8
+. "7 - wooden door"
+set "terrain[7]_blocksight" to 1
+set "terrain[7]_blockmove" to 0
+set "terrain[7]_char" to 10
+set "terrain[7][1]_color" to 134
+set "terrain[7][0]_color" to 8
+goto "#new_map"
+set "new_tree_x" to random 50 to "('level_w'-2)"
+set "new_tree_y" to random 3 to "('level_h'-2)"
+set "new_tree_iterations" to 6
+goto "#new_forest"
+set "room_w" to random 5 to 9
+set "room_h" to random 5 to 9
+set "room_x" to random 50 to "('level_w'-'room_w'-2)"
+set "room_y" to random 3 to "('level_h'-'room_h'-2)"
+set "room_terrain_base" to 5
+goto "#new_room"
+goto "#get_blockmap"
+goto "#clear_map_init"
+send "main" to "#return"
+end
+
+. "map generation function"
+: "#new_map"
+set "tmp_lc" to 0
+: "new_map_loop"
+set "tmp_x" to "('tmp_lc'%'level_w')"
+set "tmp_y" to "('tmp_lc'/'level_w')"
+set "tmp_is_edge" to 0
+inc "tmp_is_edge" by "('tmp_x'=0)"
+inc "tmp_is_edge" by "('tmp_y'=0)"
+inc "tmp_is_edge" by "('tmp_x'=('level_w'-1))"
+inc "tmp_is_edge" by "('tmp_y'=('level_h'-1))"
+set "tmp_is_edge" to "('tmp_is_edge'>0)"
+set "map_terrain_[('tmp_x')][('tmp_y')]" to "tmp_is_edge"
+if "tmp_is_edge" = 1 then "new_map_loop_continue"
+set "tmp_random" to random 0 to 19
+loop start
+dec "tmp_random" by "('tmp_random'>0)"
+loop for 11
+set "map_terrain_[('tmp_x')][('tmp_y')]" to "('tmp_random'/2)"
+: "new_map_loop_continue"
+inc "tmp_lc" by 1
+if "tmp_lc" < "('level_h'*'level_w')" then "new_map_loop"
+goto "#return"
+
+. "room generation function"
+: "#new_room"
+set "tmp_lc" to 0
+: "new_room_loop"
+set "tmp_x" to "('room_x'+('tmp_lc'%'room_w'))"
+set "tmp_y" to "('room_y'+('tmp_lc'/'room_w'))"
+set "tmp_is_edge" to 0
+inc "tmp_is_edge" by "('tmp_x'='room_x')"
+inc "tmp_is_edge" by "('tmp_y'='room_y')"
+inc "tmp_is_edge" by "('tmp_x'=('room_x'+'room_w'-1))"
+inc "tmp_is_edge" by "('tmp_y'=('room_y'+'room_h'-1))"
+set "tmp_is_edge" to "('tmp_is_edge'>0)"
+set "map_terrain_[('tmp_x')][('tmp_y')]" to "('tmp_is_edge'+'room_terrain_base')"
+inc "tmp_lc" by 1
+if "tmp_lc" < "('room_h'*'room_w')" then "new_room_loop"
+set "tmp_lc" to random 0 to 1
+if "tmp_lc" = 0 then "new_room_door_xside"
+: "new_room_door_yside"
+set "tmp_lc" to random 0 to 1
+set "tmp_x" to "('room_x'+(('room_w'-1)*'tmp_lc'))"
+set "tmp_y" to random "('room_y'+1)" to "('room_y'+'room_h'-2)"
+set "map_terrain_[('tmp_x')][('tmp_y')]" to "(2+'room_terrain_base')"
+goto "#return"
+: "new_room_door_xside"
+set "tmp_lc" to random 0 to 1
+set "tmp_y" to "('room_y'+(('room_h'-1)*'tmp_lc'))"
+set "tmp_x" to random "('room_x'+1)" to "('room_x'+'room_w'-2)"
+set "map_terrain_[('tmp_x')][('tmp_y')]" to "(2+'room_terrain_base')"
+goto "#return"
+
+. "room generation function"
+: "#new_forest"
+set "current_tree[0]_x" to "new_tree_x"
+set "current_tree[0]_y" to "new_tree_y"
+set "new_trees" to 0
+set "current_trees" to 1
+set "current_tree_iteration" to 0
+: "new_forest_iteration"
+set "tmp_lc" to 0
+: "new_forest_loop"
+set "new_trees_to_spawn" to random "(1+('current_tree_iteraton'<2))" to 4
+loop start
+goto "#new_forest_loop_new_tree"
+loop for "('new_trees_to_spawn'-1)"
+inc "tmp_lc" by 1
+if "tmp_lc" < "current_trees" then "new_forest_loop"
+loop start
+set "current_tree[&loopcount&]_x" to "new_tree[&loopcount&]_x"
+set "current_tree[&loopcount&]_y" to "new_tree[&loopcount&]_y"
+loop for "('new_trees'-1)"
+set "current_trees" to "new_trees"
+inc "current_tree_iteration" by 1
+if "current_tree_iteration" < "new_tree_iterations" then "new_forest_iteration"
+goto "#return"
+
+: "#new_forest_loop_new_tree"
+set "tmp_x" to random "('current_tree[&tmp_lc&]_x'-7)" to "('current_tree[&tmp_lc&]_x'+7)"
+set "tmp_y" to random "('current_tree[&tmp_lc&]_y'-3)" to "('current_tree[&tmp_lc&]_y'+3)"
+if "map_terrain_[&tmp_x&][&tmp_y&]" = 2 then "#return"
+if "(('tmp_x'<1)+('tmp_x'>('level_w'-2)))" > 0 then "#return"
+if "(('tmp_y'<1)+('tmp_y'>('level_h'-2)))" > 0 then "#return"
+set "new_tree[&new_trees&]_x" to "tmp_x"
+set "new_tree[&new_trees&]_y" to "tmp_y"
+set "map_terrain_[&tmp_x&][&tmp_y&]" to 2
+inc "new_trees" by 1
+goto "#return"
+
+. "get the following based on presence of walls:"
+. "map_blockmove_[x][y]:    object at x,y blocks movement"
+. "map_blocksight_[x][y]:   object at x,y blocks sight"
+
+: "#get_blockmap"
+set "tmp_lc" to 0
+: "get_blockmap_loop"
+set "tmp_x" to "('tmp_lc'%'level_w')"
+set "tmp_y" to "('tmp_lc'/'level_w')"
+set "tmp_terrain" to "map_terrain_[('tmp_x')][('tmp_y')]"
+set "map_blockmove_[('tmp_x')][('tmp_y')]" to "terrain[('tmp_terrain')]_blockmove"
+set "map_blocksight_[('tmp_x')][('tmp_y')]" to "terrain[('tmp_terrain')]_blocksight"
+set "map_visited_[('tmp_x')][('tmp_y')]" to 0
+inc "tmp_lc" by 1
+if "tmp_lc" < "('level_h'*'level_w')" then "get_blockmap_loop"
+goto "#return"
+
+. "clear the entire map sprite reference off"
+
+: "#clear_map_init"
+set "tmp_lc" to 0
+: "clear_map_init_loop"
+set "vco('tmp_lc'%'level_w'),('tmp_lc'/'level_w')" to 0
+set "vch('tmp_lc'%'level_w'),('tmp_lc'/'level_w')" to 0
+set "map_inview_[('tmp_lc'%'level_w')][('tmp_lc'/'level_w')]" to 0
+inc "tmp_lc" by 1
+if "tmp_lc" < "('level_h'*'level_w')" then "clear_map_init_loop"
+goto "#return"
